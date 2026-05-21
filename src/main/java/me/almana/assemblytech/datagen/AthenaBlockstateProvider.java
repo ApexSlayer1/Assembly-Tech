@@ -24,6 +24,7 @@ public final class AthenaBlockstateProvider implements DataProvider {
         List<CompletableFuture<?>> futures = new ArrayList<>();
         for (int tier = 1; tier <= ModBlocks.MINER_TIERS; tier++) {
             futures.add(generateFrame(cache, tier));
+            futures.add(generatePanel(cache, tier));
         }
         return CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new));
     }
@@ -44,6 +45,26 @@ public final class AthenaBlockstateProvider implements DataProvider {
 
         Path path = output.getOutputFolder(PackOutput.Target.RESOURCE_PACK)
                 .resolve("assemblytech/athena/structure_frame_" + tier + ".json");
+
+        return DataProvider.saveStable(cache, root, path);
+    }
+
+    private CompletableFuture<?> generatePanel(CachedOutput cache, int tier) {
+        String prefix = "assemblytech:block/tier_" + tier + "/structure_panel_" + tier;
+
+        JsonObject ctmTextures = new JsonObject();
+        ctmTextures.addProperty("particle", prefix + "_base");
+        ctmTextures.addProperty("center", prefix + "_corner");
+        ctmTextures.addProperty("empty", prefix + "_middle");
+        ctmTextures.addProperty("horizontal", prefix + "_horizontal");
+        ctmTextures.addProperty("vertical", prefix + "_vertical");
+
+        JsonObject root = new JsonObject();
+        root.addProperty("athena:loader", "athena:ctm");
+        root.add("ctm_textures", ctmTextures);
+
+        Path path = output.getOutputFolder(PackOutput.Target.RESOURCE_PACK)
+                .resolve("assemblytech/athena/structure_panel_" + tier + ".json");
 
         return DataProvider.saveStable(cache, root, path);
     }

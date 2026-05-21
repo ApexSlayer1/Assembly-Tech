@@ -25,7 +25,9 @@ public final class AssemblytechModelProvider extends ModelProvider {
             Block frame = ModBlocks.frame(tier).get();
             Material baseTexture = new Material(Identifier.fromNamespaceAndPath(Assemblytech.MODID, "block/tier_" + tier + "/structure_frame_" + tier + "_base"));
             blockModels.createTrivialBlock(frame, b -> TexturedModel.createAllSame(baseTexture));
-            blockModels.createTrivialCube(ModBlocks.panel(tier).get());
+            Block panel = ModBlocks.panel(tier).get();
+            Material panelBase = new Material(Identifier.fromNamespaceAndPath(Assemblytech.MODID, "block/tier_" + tier + "/structure_panel_" + tier + "_base"));
+            blockModels.createTrivialBlock(panel, b -> TexturedModel.createAllSame(panelBase));
             blockModels.createTrivialCube(ModBlocks.controller(tier).get());
         }
         blockModels.createTrivialCube(ModBlocks.DRILL_CORE.get());
