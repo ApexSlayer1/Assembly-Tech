@@ -1,0 +1,10 @@
+colors:
+red:7D2626FF
+pink:A43EADFF
+Purple:7A44D2FF
+blue:1C51BFFF
+cyan:119E96FF
+green:00A604FF
+gray1:434343FF
+gray2:262626FF
+black:151515FF
