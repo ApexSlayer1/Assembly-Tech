@@ -21,10 +21,10 @@ import org.jetbrains.annotations.Nullable;
 public class VoidMinerStatusMenu extends AbstractContainerMenu {
 
     private static final int OUTPUT_SLOT_COUNT = 27;
-    private static final int SLOT_OUTPUT_X = 136;
-    private static final int SLOT_OUTPUT_Y = 53;
-    private static final int INV_X = 108;
-    private static final int INV_Y = 144;
+    private static final int SLOT_OUTPUT_X = 110;
+    private static final int SLOT_OUTPUT_Y = 57;
+    private static final int INV_X = 110;
+    private static final int INV_Y = 147;
 
     private static final class OutputSlot extends Slot {
         OutputSlot(Container container, int index, int x, int y) {

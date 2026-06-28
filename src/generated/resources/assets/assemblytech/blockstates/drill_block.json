@@ -1,6 +1,21 @@
 {
   "variants": {
-    "": {
+    "facing=down": {
+      "model": "assemblytech:block/drill_block"
+    },
+    "facing=east": {
+      "model": "assemblytech:block/drill_block"
+    },
+    "facing=north": {
+      "model": "assemblytech:block/drill_block"
+    },
+    "facing=south": {
+      "model": "assemblytech:block/drill_block"
+    },
+    "facing=up": {
+      "model": "assemblytech:block/drill_block"
+    },
+    "facing=west": {
       "model": "assemblytech:block/drill_block"
     }
   }

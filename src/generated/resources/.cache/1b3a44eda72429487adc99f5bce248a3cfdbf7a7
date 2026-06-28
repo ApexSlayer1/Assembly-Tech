@@ -1,5 +1,5 @@
-// 26.1.2	2026-05-21T09:16:42.8954019	Model Definitions - assemblytech
-84cd62fab74f47185ee0c4363afd0065007c9913 assets/assemblytech/blockstates/drill_block.json
+// 26.1.2	2026-06-28T15:51:05.536803	Model Definitions - assemblytech
+be687ce24cd7a6f8537d8c67ce318eaeb62049c3 assets/assemblytech/blockstates/drill_block.json
 eee0a2cfeb6eb01c2f8c275b339339e140bc2895 assets/assemblytech/blockstates/drill_core.json
 b37c448f4bb9662a0545ca25ba278d7093d4db1f assets/assemblytech/blockstates/geothermal_vent.json
 efc11818532c92f2405cdc5bd159debee25c5b71 assets/assemblytech/blockstates/geothermal_vent_wall.json
@@ -41,7 +41,7 @@ fe0ecbcb0ee6d3077b60fb1eea4421f16dfda182 assets/assemblytech/blockstates/void_mi
 df193553530c8ff0d557207fe36971439b296671 assets/assemblytech/items/assembler.json
 6331aac21d69c9604d4c70a7943a391ab2a2681b assets/assemblytech/items/celestium_crystal.json
 fa3d0542a5ec7dc1108a0cd1a0869f3fc30d0cdb assets/assemblytech/items/cosmyrite_crystal.json
-be0414e57d52ed09ef2227d95c2ca46652f2bee2 assets/assemblytech/items/drill_block.json
+c628dce575e9c7f8160e90646786f0cb8b5670f8 assets/assemblytech/items/drill_block.json
 71b3b41d835f3eb660b3b584af78c4bc72e92999 assets/assemblytech/items/drill_core.json
 d3b7a7bda8317d74089d4fa8d7a87d9daaa8e8e1 assets/assemblytech/items/eclipsium_crystal.json
 acf014166727cc944ab2cf4265f9f10a23e33bfd assets/assemblytech/items/geothermal_vent.json

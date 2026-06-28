@@ -6,6 +6,7 @@ import me.almana.assemblytech.geothermal.GeothermalVentWallBlock;
 import me.almana.assemblytech.multiblock.controller.MultiblockControllerBlock;
 import me.almana.assemblytech.multiblock.modifier.ModifierBlock;
 import me.almana.assemblytech.multiblock.slave.MultiblockSlaveBlock;
+import me.almana.assemblytech.voidminer.LaserBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
@@ -85,12 +86,13 @@ public final class ModBlocks {
 
     public static final DeferredBlock<Block> DRILL_BLOCK = Assemblytech.BLOCKS.registerBlock(
             "drill_block",
-            props -> new MultiblockSlaveBlock(props, ModBlockEntities.SLAVE::get),
+            props -> new LaserBlock(props, ModBlockEntities.SLAVE::get),
             () -> BlockBehaviour.Properties.of()
                     .mapColor(MapColor.COLOR_GRAY)
                     .strength(4.0f, 100.0f)
                     .sound(SoundType.METAL)
                     .requiresCorrectToolForDrops()
+                    .noOcclusion()
     );
 
     public static final DeferredBlock<Block> VOID_BLOCK = Assemblytech.BLOCKS.registerBlock(

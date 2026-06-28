@@ -22,20 +22,22 @@ public class VoidMinerStatusScreen extends AbstractContainerScreen<VoidMinerStat
 
     private static final int CHAMBER_X = 10;
     private static final int CHAMBER_Y = 38;
-    private static final int CHAMBER_W = 110;
-    private static final int CHAMBER_H = 92;
+    private static final int CHAMBER_W = 80;
+    private static final int CHAMBER_H = 194;
 
-    private static final int OUTPUT_PANEL_X = 128;
-    private static final int OUTPUT_PANEL_Y = 34;
-    private static final int OUTPUT_SLOT_X = 136;
-    private static final int OUTPUT_SLOT_Y = 53;
+    private static final int OUTPUT_PANEL_X = 96;
+    private static final int OUTPUT_PANEL_Y = 38;
+    private static final int OUTPUT_SLOT_X = 110;
+    private static final int OUTPUT_SLOT_Y = 57;
     private static final int OUTPUT_COLS = 9;
     private static final int OUTPUT_ROWS = 3;
 
-    private static final int INV_PANEL_X = 100;
+    private static final int MIDDLE_W = 188;
+
+    private static final int INV_PANEL_X = 96;
     private static final int INV_PANEL_Y = 136;
-    private static final int INV_SLOT_X = 108;
-    private static final int INV_SLOT_Y = 144;
+    private static final int INV_SLOT_X = 110;
+    private static final int INV_SLOT_Y = 147;
 
     private static final int POWER_X = 290;
     private static final int POWER_Y = 136;
@@ -45,11 +47,6 @@ public class VoidMinerStatusScreen extends AbstractContainerScreen<VoidMinerStat
     private static final int POWER_TUBE_Y = 145;
     private static final int POWER_TUBE_W = 16;
     private static final int POWER_TUBE_H = 78;
-
-    private static final int STATUS_X = 6;
-    private static final int STATUS_W = 86;
-    private static final int PROGRESS_Y = CHAMBER_Y + CHAMBER_H + 8;
-    private static final int PROGRESS_H = 8;
 
     private static final int COLOR_VOID = 0xFF05070B;
     private static final int COLOR_SHELL = 0xFF0A0E16;
@@ -71,34 +68,10 @@ public class VoidMinerStatusScreen extends AbstractContainerScreen<VoidMinerStat
     private static final int COLOR_ROCK = 0xFF4A3825;
     private static final int COLOR_ROCK_DARK = 0xFF1B1209;
 
-    private float prevProgress;
-    private float currProgress;
-    private int lastProgressMax;
-    private float smoothedProgress;
-    private boolean initialized;
-
     public VoidMinerStatusScreen(VoidMinerStatusMenu menu, Inventory inv, Component title) {
         super(menu, inv, title, WIDTH, HEIGHT);
         this.titleLabelX = -9999;
         this.inventoryLabelY = -9999;
-    }
-
-    @Override
-    protected void containerTick() {
-        super.containerTick();
-        int pmax = menu.getProgressMax();
-        int pcur = menu.getProgress();
-        if (!initialized || pmax != lastProgressMax || pcur + 1 < currProgress) {
-            prevProgress = pcur;
-            currProgress = pcur;
-            smoothedProgress = pcur;
-            lastProgressMax = pmax;
-            initialized = true;
-            return;
-        }
-        prevProgress = currProgress;
-        currProgress = pcur;
-        lastProgressMax = pmax;
     }
 
     @Override
@@ -114,7 +87,6 @@ public class VoidMinerStatusScreen extends AbstractContainerScreen<VoidMinerStat
         drawCornerBrackets(graphics, x, y, imageWidth, imageHeight, COLOR_RIM_BRIGHT);
         drawHeader(graphics, x, y);
         drawChamber(graphics, x, y, a);
-        drawStatusPills(graphics, x, y);
         drawOutputPanel(graphics, x, y);
         drawInventoryPanel(graphics, x, y);
         drawPowerCell(graphics, x, y);
@@ -140,7 +112,7 @@ public class VoidMinerStatusScreen extends AbstractContainerScreen<VoidMinerStat
         graphics.text(font, Component.literal("04:17"), x + 250, y + 16, COLOR_TEXT, false);
 
         boolean working = menu.isWorking();
-        int bx = x + 294;
+        int bx = x + imageWidth - 10 - 52;
         int by = y + 7;
         fillFrame(graphics, bx, by, 52, 15, working ? COLOR_ACCENT : COLOR_PANEL_DARK, COLOR_ACCENT);
         graphics.fill(bx + 4, by + 5, bx + 8, by + 9, working ? COLOR_SLOT : COLOR_ACCENT);
@@ -161,16 +133,15 @@ public class VoidMinerStatusScreen extends AbstractContainerScreen<VoidMinerStat
             int color = i % 6 == 0 ? 0xFFE9FFFF : 0xFFB9CAD8;
             graphics.fill(sx, sy, sx + 1, sy + 1, withAlpha(color, 0.55f));
         }
-        for (int i = 0; i < 4; i++) {
-            int gy = cy + 19 + i * 15;
+        for (int gy = cy + 19; gy < cy + CHAMBER_H - 22; gy += 15) {
             graphics.fill(cx + 6, gy, cx + CHAMBER_W - 6, gy + 1, withAlpha(COLOR_RIM, 0.18f));
         }
 
         int t = (int) (minecraft.level == null ? 0 : minecraft.level.getGameTime());
         int wobX = Math.round(Mth.sin((t + a) * 0.08f) * 2f);
         int wobY = Math.round(Mth.cos((t + a) * 0.1f) * 2f);
-        int ax = cx + 73 + wobX;
-        int ay = cy + 46 + wobY;
+        int ax = cx + CHAMBER_W / 2 + wobX;
+        int ay = cy + CHAMBER_H / 2 + 25 + wobY;
         drawAsteroid(graphics, ax, ay);
         drawEmitter(graphics, cx, cy, menu.isWorking(), t);
 
@@ -182,8 +153,6 @@ public class VoidMinerStatusScreen extends AbstractContainerScreen<VoidMinerStat
         graphics.fill(cx + 2, scanY, cx + CHAMBER_W - 2, scanY + 1, withAlpha(COLOR_ACCENT, 0.18f));
         graphics.fill(cx + 2, cy + 2, cx + CHAMBER_W - 2, cy + 3, withAlpha(0xFFFFFFFF, 0.05f));
         drawChamberChrome(graphics, cx, cy);
-        drawTelemetry(graphics, cx, cy, t);
-        drawProgress(graphics, x, y, a);
     }
 
     private void drawAsteroid(GuiGraphicsExtractor graphics, int ax, int ay) {
@@ -203,34 +172,34 @@ public class VoidMinerStatusScreen extends AbstractContainerScreen<VoidMinerStat
     }
 
     private void drawEmitter(GuiGraphicsExtractor graphics, int cx, int cy, boolean working, int tick) {
-        int ey = cy + 42;
-        graphics.fill(cx + 1, ey - 15, cx + 10, ey + 16, COLOR_PANEL);
-        graphics.fill(cx + 9, ey - 11, cx + 14, ey + 12, COLOR_SLOT);
-        graphics.fill(cx + 13, ey - 3, cx + 18, ey + 4, working ? COLOR_ACCENT : COLOR_RIM);
-        graphics.fill(cx + 2, ey - 19, cx + 11, ey - 17, COLOR_RIM_BRIGHT);
-        graphics.fill(cx + 2, ey + 18, cx + 11, ey + 20, COLOR_RIM_BRIGHT);
+        int ex = cx + CHAMBER_W / 2;
+        graphics.fill(ex - 15, cy + 1, ex + 16, cy + 10, COLOR_PANEL);
+        graphics.fill(ex - 11, cy + 9, ex + 12, cy + 14, COLOR_SLOT);
+        graphics.fill(ex - 3, cy + 13, ex + 4, cy + 18, working ? COLOR_ACCENT : COLOR_RIM);
+        graphics.fill(ex - 19, cy + 2, ex - 17, cy + 11, COLOR_RIM_BRIGHT);
+        graphics.fill(ex + 17, cy + 2, ex + 19, cy + 11, COLOR_RIM_BRIGHT);
         if (working && tick % 14 < 7) {
-            graphics.fill(cx + 15, ey - 1, cx + 17, ey + 2, 0xFFFFFFFF);
+            graphics.fill(ex - 1, cy + 15, ex + 2, cy + 17, 0xFFFFFFFF);
         }
     }
 
     private void drawLaser(GuiGraphicsExtractor graphics, int cx, int cy, int ax, int ay, int tick) {
-        int ey = cy + 42;
-        int endX = ax - 17;
+        int ex = cx + CHAMBER_W / 2;
+        int startY = cy + 18;
+        int endY = ay - 17;
         float pulse = tick % 12 < 6 ? 1f : 0.72f;
-        graphics.fill(cx + 17, ey - 5, endX, ey + 6, withAlpha(COLOR_ACCENT, 0.16f * pulse));
-        graphics.fill(cx + 17, ey - 2, endX, ey + 3, withAlpha(COLOR_ACCENT, 0.86f * pulse));
-        graphics.fill(cx + 17, ey, endX, ey + 1, 0xFFFFFFFF);
-        graphics.fill(endX - 3, ay - 8, endX + 7, ay + 9, withAlpha(COLOR_ACCENT, 0.32f * pulse));
-        graphics.fill(endX, ay - 2, endX + 4, ay + 3, 0xFFFFFFFF);
-        graphics.fill(endX - 10, ay - 10, endX - 8, ay - 8, COLOR_ACCENT);
-        graphics.fill(endX - 3, ay + 11, endX - 1, ay + 13, 0xFFA88A60);
-        graphics.fill(endX + 7, ay - 12, endX + 9, ay - 10, 0xFFA88A60);
-        graphics.fill(endX + 13, ay + 4, endX + 15, ay + 6, COLOR_ACCENT);
-        graphics.fill(endX - 18, ay, endX - 12, ay + 1, COLOR_ACCENT);
-        graphics.fill(endX + 10, ay, endX + 16, ay + 1, COLOR_ACCENT);
-        graphics.fill(endX + 1, ay - 14, endX + 2, ay - 9, COLOR_ACCENT);
-        graphics.fill(endX + 1, ay + 10, endX + 2, ay + 15, COLOR_ACCENT);
+        graphics.fill(ex - 5, startY, ex + 6, endY, withAlpha(COLOR_ACCENT, 0.16f * pulse));
+        graphics.fill(ex - 2, startY, ex + 3, endY, withAlpha(COLOR_ACCENT, 0.86f * pulse));
+        graphics.fill(ex, startY, ex + 1, endY, 0xFFFFFFFF);
+        graphics.fill(ex - 8, endY - 3, ex + 9, endY + 7, withAlpha(COLOR_ACCENT, 0.32f * pulse));
+        graphics.fill(ex - 2, endY, ex + 3, endY + 4, 0xFFFFFFFF);
+        graphics.fill(ex - 10, endY - 10, ex - 8, endY - 8, COLOR_ACCENT);
+        graphics.fill(ex + 11, endY - 3, ex + 13, endY - 1, 0xFFA88A60);
+        graphics.fill(ex - 12, endY + 7, ex - 10, endY + 9, 0xFFA88A60);
+        graphics.fill(ex + 4, endY + 13, ex + 6, endY + 15, COLOR_ACCENT);
+        graphics.fill(ex, endY - 18, ex + 1, endY - 12, COLOR_ACCENT);
+        graphics.fill(ex - 14, endY + 1, ex - 13, endY + 7, COLOR_ACCENT);
+        graphics.fill(ex + 12, endY + 1, ex + 13, endY + 7, COLOR_ACCENT);
     }
 
     private void drawChamberChrome(GuiGraphicsExtractor graphics, int cx, int cy) {
@@ -238,63 +207,16 @@ public class VoidMinerStatusScreen extends AbstractContainerScreen<VoidMinerStat
         corner(graphics, cx + CHAMBER_W - 11, cy + 1, 10, 10, COLOR_ACCENT, false, true);
         corner(graphics, cx + 1, cy + CHAMBER_H - 11, 10, 10, COLOR_ACCENT, true, false);
         corner(graphics, cx + CHAMBER_W - 11, cy + CHAMBER_H - 11, 10, 10, COLOR_ACCENT, false, false);
-        graphics.text(font, Component.translatable("screen.assemblytech.void_miner.chamber"), cx + 16, cy + 7, COLOR_TEXT, false);
-        graphics.text(font, Component.literal("044"), cx + CHAMBER_W - 24, cy + 7, COLOR_TEXT_DIM, false);
-    }
-
-    private void drawTelemetry(GuiGraphicsExtractor graphics, int cx, int cy, int tick) {
-        int ty = cy + CHAMBER_H - 19;
-        int yield = menu.isWorking() ? 184 + tick % 12 : 0;
-        telemetryCell(graphics, cx + 8, ty, 30, "YLD", String.format(Locale.ROOT, "%.1f", yield / 100f), COLOR_ACCENT);
-        int depth = 420 + (menu.isWorking() ? tick % 80 : 0);
-        telemetryCell(graphics, cx + 40, ty, 30, "DPT", depth + "m", COLOR_TEXT);
-        int core = menu.isWorking() ? 1820 + tick % 40 : 290;
-        telemetryCell(graphics, cx + 72, ty, 30, "K", core >= 1000 ? String.format(Locale.ROOT, "%.1fk", core / 1000f) : Integer.toString(core), COLOR_TEXT);
-    }
-
-    private void telemetryCell(GuiGraphicsExtractor graphics, int x, int y, int w, String key, String value, int valueColor) {
-        graphics.fill(x, y, x + w, y + 15, 0xCC080C14);
-        graphics.fill(x, y, x + w, y + 1, COLOR_RIM);
-        graphics.text(font, Component.literal(key), x + 3, y + 2, COLOR_TEXT_MUTE, false);
-        graphics.text(font, Component.literal(value), x + 3, y + 8, valueColor, false);
-    }
-
-    private void drawProgress(GuiGraphicsExtractor graphics, int x, int y, float a) {
-        int px = x + STATUS_X;
-        int py = y + PROGRESS_Y;
-        fillFrame(graphics, px, py, STATUS_W, PROGRESS_H, COLOR_PANEL_DARK, COLOR_RIM);
-
-        float t = Mth.clamp(a, 0f, 1f);
-        smoothedProgress = Mth.lerp(t, prevProgress, currProgress);
-        int pmax = menu.getProgressMax();
-        float pct = pmax > 0 ? Mth.clamp(smoothedProgress / pmax, 0f, 1f) : 0f;
-        int fill = Math.round((STATUS_W - 4) * pct);
-        if (fill > 0) {
-            graphics.fill(px + 2, py + 2, px + 2 + fill, py + PROGRESS_H - 2, COLOR_ACCENT);
-        }
-    }
-
-    private void drawStatusPills(GuiGraphicsExtractor graphics, int x, int y) {
-        int sx = x + STATUS_X;
-        int sy = y + PROGRESS_Y + 14;
-        statusPill(graphics, sx, sy, "MODE", "CONT");
-        statusPill(graphics, sx, sy + 17, "FLT", "NONE");
-        statusPill(graphics, sx, sy + 34, "UPG", menu.getUpgradePlaced() + "/" + menu.getUpgradeMax());
-    }
-
-    private void statusPill(GuiGraphicsExtractor graphics, int x, int y, String key, String value) {
-        fillFrame(graphics, x, y, STATUS_W, 13, COLOR_PANEL, COLOR_RIM);
-        graphics.text(font, Component.literal(key), x + 5, y + 3, COLOR_TEXT_MUTE, false);
-        graphics.text(font, Component.literal(value), x + STATUS_W - 5 - font.width(value), y + 3, COLOR_ACCENT, false);
     }
 
     private void drawOutputPanel(GuiGraphicsExtractor graphics, int x, int y) {
         int px = x + OUTPUT_PANEL_X;
         int py = y + OUTPUT_PANEL_Y;
-        fillFrame(graphics, px, py, 174, 76, COLOR_PANEL, COLOR_RIM);
-        graphics.fill(px + 35, py, px + 139, py + 1, withAlpha(COLOR_ACCENT, 0.55f));
+        fillFrame(graphics, px, py, MIDDLE_W, 76, COLOR_PANEL, COLOR_RIM);
+        graphics.fill(px + 42, py, px + 146, py + 1, withAlpha(COLOR_ACCENT, 0.55f));
         graphics.text(font, Component.translatable("screen.assemblytech.void_miner.output_buffer"), px + 8, py + 5, COLOR_TEXT, false);
-        graphics.text(font, Component.literal(countFilledOutputSlots() + "/27"), px + 143, py + 5, COLOR_TEXT_DIM, false);
+        String count = countFilledOutputSlots() + "/27";
+        graphics.text(font, Component.literal(count), px + MIDDLE_W - 8 - font.width(count), py + 5, COLOR_TEXT_DIM, false);
 
         for (int row = 0; row < OUTPUT_ROWS; row++) {
             for (int col = 0; col < OUTPUT_COLS; col++) {
@@ -314,7 +236,7 @@ public class VoidMinerStatusScreen extends AbstractContainerScreen<VoidMinerStat
     private void drawInventoryPanel(GuiGraphicsExtractor graphics, int x, int y) {
         int px = x + INV_PANEL_X;
         int py = y + INV_PANEL_Y;
-        fillFrame(graphics, px, py, 174, 96, COLOR_PANEL_DARK, COLOR_RIM);
+        fillFrame(graphics, px, py, MIDDLE_W, 96, COLOR_PANEL_DARK, COLOR_RIM);
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 9; col++) {
                 drawSlot(graphics, x + INV_SLOT_X + col * 18, y + INV_SLOT_Y + row * 18);

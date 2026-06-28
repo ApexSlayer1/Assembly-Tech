@@ -3,9 +3,14 @@ package me.almana.assemblytech.datagen;
 import me.almana.assemblytech.Assemblytech;
 import me.almana.assemblytech.registry.ModBlocks;
 import me.almana.assemblytech.registry.ModItems;
+import me.almana.assemblytech.voidminer.LaserBlock;
+import me.almana.assemblytech.voidminer.client.LaserItemRenderer;
 import net.minecraft.client.data.models.BlockModelGenerators;
 import net.minecraft.client.data.models.ItemModelGenerators;
 import net.minecraft.client.data.models.ModelProvider;
+import net.minecraft.client.data.models.blockstates.MultiVariantGenerator;
+import net.minecraft.client.data.models.blockstates.PropertyDispatch;
+import net.minecraft.client.data.models.model.ItemModelUtils;
 import net.minecraft.client.data.models.model.ModelTemplates;
 import net.minecraft.client.data.models.model.TexturedModel;
 import net.minecraft.client.resources.model.sprite.Material;
@@ -31,7 +36,10 @@ public final class AssemblytechModelProvider extends ModelProvider {
             blockModels.createTrivialCube(ModBlocks.controller(tier).get());
         }
         blockModels.createTrivialCube(ModBlocks.DRILL_CORE.get());
-        blockModels.createTrivialCube(ModBlocks.DRILL_BLOCK.get());
+        Identifier drillModel = TexturedModel.CUBE.create(ModBlocks.DRILL_BLOCK.get(), blockModels.modelOutput);
+        blockModels.blockStateOutput.accept(MultiVariantGenerator.dispatch(ModBlocks.DRILL_BLOCK.get())
+                .with(PropertyDispatch.initial(LaserBlock.FACING)
+                        .generate(facing -> BlockModelGenerators.plainVariant(drillModel))));
         blockModels.createTrivialCube(ModBlocks.VOID_BLOCK.get());
         blockModels.createTrivialCube(ModBlocks.UPGRADE_SPEED.get());
         blockModels.createTrivialCube(ModBlocks.UPGRADE_EFFICIENCY.get());
@@ -49,6 +57,10 @@ public final class AssemblytechModelProvider extends ModelProvider {
         blockModels.createTrivialCube(ModBlocks.PRISTINE_GEOTHERMAL_VENT_WALL.get());
 
         itemModels.generateFlatItem(ModItems.ASSEMBLER.get(), ModelTemplates.FLAT_ITEM);
+        itemModels.itemModelOutput.accept(ModItems.DRILL_BLOCK.get(), ItemModelUtils.specialModel(
+                Identifier.fromNamespaceAndPath(Assemblytech.MODID, "block/drill_block"),
+                new LaserItemRenderer.Unbaked()
+        ));
         for (int tier = 1; tier <= ModBlocks.MINER_TIERS; tier++) {
             itemModels.generateFlatItem(ModItems.crystal(tier).get(), ModelTemplates.FLAT_ITEM);
         }

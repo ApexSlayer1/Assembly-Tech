@@ -9,6 +9,9 @@ import me.almana.assemblytech.registry.ModBlocks;
 import me.almana.assemblytech.registry.ModItems;
 import me.almana.assemblytech.registry.ModMenus;
 import me.almana.assemblytech.registry.ModRecipes;
+import me.almana.assemblytech.voidminer.client.LaserBlockRenderer;
+import me.almana.assemblytech.voidminer.client.LaserItemRenderer;
+import me.almana.assemblytech.voidminer.client.LaserModel;
 import me.almana.assemblytech.voidminer.screen.VoidMinerStatusScreen;
 import me.almana.assemblytech.voidminer.VoidMinerStructures;
 import me.almana.assemblytech.worldgen.ModFeatures;
@@ -29,6 +32,8 @@ import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
+import net.neoforged.neoforge.client.event.EntityRenderersEvent;
+import net.neoforged.neoforge.client.event.RegisterSpecialModelRendererEvent;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
@@ -166,6 +171,21 @@ public class Assemblytech {
         @SubscribeEvent
         public static void onRegisterMenuScreens(RegisterMenuScreensEvent event) {
             event.register(ModMenus.VOID_MINER.get(), VoidMinerStatusScreen::new);
+        }
+
+        @SubscribeEvent
+        public static void onRegisterLayerDefinitions(EntityRenderersEvent.RegisterLayerDefinitions event) {
+            event.registerLayerDefinition(LaserModel.LAYER_LOCATION, LaserModel::createBodyLayer);
+        }
+
+        @SubscribeEvent
+        public static void onRegisterRenderers(EntityRenderersEvent.RegisterRenderers event) {
+            event.registerBlockEntityRenderer(ModBlockEntities.SLAVE.get(), LaserBlockRenderer::new);
+        }
+
+        @SubscribeEvent
+        public static void onRegisterSpecialModelRenderers(RegisterSpecialModelRendererEvent event) {
+            event.register(LaserItemRenderer.ID, LaserItemRenderer.Unbaked.MAP_CODEC);
         }
     }
 }
