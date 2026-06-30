@@ -12,7 +12,7 @@ import me.almana.assemblytech.registry.ModRecipes;
 import me.almana.assemblytech.voidminer.client.LaserBlockRenderer;
 import me.almana.assemblytech.voidminer.client.LaserItemRenderer;
 import me.almana.assemblytech.voidminer.client.LaserModel;
-import me.almana.assemblytech.voidminer.client.TargetDesignatorItemRenderer;
+import me.almana.assemblytech.voidminer.client.OreDesignatorItemRenderer;
 import me.almana.assemblytech.voidminer.recipe.DesignatorTexturesPayload;
 import me.almana.assemblytech.voidminer.screen.VoidMinerStatusScreen;
 import me.almana.assemblytech.voidminer.VoidMinerStructures;
@@ -88,8 +88,9 @@ public class Assemblytech {
                         output.accept(ModItems.VOID_MINER_CONTROLLER_5.get());
                         output.accept(ModItems.VOID_MINER_CONTROLLER_6.get());
                         output.accept(ModItems.VOID_MINER_CONTROLLER_7.get());
-                        output.accept(ModItems.TARGET_DESIGNATOR.get());
+                        output.accept(ModItems.ORE_DESIGNATOR.get());
                         output.accept(ModItems.RESOURCE_DESIGNATOR.get());
+                        output.accept(ModItems.FLUID_DESIGNATOR.get());
                         output.accept(ModItems.ARCANITE_CRYSTAL.get());
                         output.accept(ModItems.SOLUNITE_CRYSTAL.get());
                         output.accept(ModItems.CELESTIUM_CRYSTAL.get());
@@ -169,7 +170,7 @@ public class Assemblytech {
         event.registrar("1").playToClient(
                 DesignatorTexturesPayload.TYPE,
                 DesignatorTexturesPayload.STREAM_CODEC,
-                (payload, context) -> TargetDesignatorItemRenderer.applyTextures(payload.textures()));
+                (payload, context) -> OreDesignatorItemRenderer.applyTextures(payload.textures()));
     }
 
     @SubscribeEvent
@@ -207,7 +208,7 @@ public class Assemblytech {
         @SubscribeEvent
         public static void onRegisterSpecialModelRenderers(RegisterSpecialModelRendererEvent event) {
             event.register(LaserItemRenderer.ID, LaserItemRenderer.Unbaked.MAP_CODEC);
-            event.register(TargetDesignatorItemRenderer.ID, TargetDesignatorItemRenderer.Unbaked.MAP_CODEC);
+            event.register(OreDesignatorItemRenderer.ID, OreDesignatorItemRenderer.Unbaked.MAP_CODEC);
         }
     }
 }

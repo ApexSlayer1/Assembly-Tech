@@ -4,7 +4,9 @@ import me.almana.assemblytech.registry.ModBlocks;
 import me.almana.assemblytech.registry.ModMenus;
 import me.almana.assemblytech.voidminer.VoidMinerControllerEntity;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.world.level.material.Fluid;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.resources.Identifier;
 import net.minecraft.tags.TagKey;
@@ -33,13 +35,14 @@ public class VoidMinerStatusMenu extends AbstractContainerMenu {
     private static final int DESIGNATOR_Y = 68;
 
     private static final TagKey<net.minecraft.world.item.Item> DESIGNATORS =
-            TagKey.create(Registries.ITEM, Identifier.fromNamespaceAndPath("assemblytech", "target_designators"));
+            TagKey.create(Registries.ITEM, Identifier.fromNamespaceAndPath("assemblytech", "designators"));
 
-    private static final class OutputSlot extends Slot {
+    private final class OutputSlot extends Slot {
         OutputSlot(Container container, int index, int x, int y) {
             super(container, index, x, y);
         }
         @Override public boolean mayPlace(ItemStack stack) { return false; }
+        @Override public boolean isActive() { return !fluidMode(); }
     }
 
     private static final class DesignatorSlot extends Slot {
@@ -59,8 +62,9 @@ public class VoidMinerStatusMenu extends AbstractContainerMenu {
 
     private int clientEnergy;
     private int clientCapacity;
-    private int clientFluid;
-    private int clientFluidCapacity;
+    private int clientFluidMode;
+    private final int[] clientTankAmount = new int[VoidMinerControllerEntity.TANK_COUNT];
+    private final int[] clientTankFluidId = new int[VoidMinerControllerEntity.TANK_COUNT];
     private int clientStatus;
     private int clientProgress;
     private int clientProgressMax;
@@ -96,11 +100,9 @@ public class VoidMinerStatusMenu extends AbstractContainerMenu {
     }
 
     private void readInitialData(RegistryFriendlyByteBuf buf) {
-        if (buf.readableBytes() < 44) return;
+        if (buf.readableBytes() < 36) return;
         clientEnergy = buf.readInt();
         clientCapacity = buf.readInt();
-        clientFluid = buf.readInt();
-        clientFluidCapacity = buf.readInt();
         clientStatus = buf.readInt();
         clientProgress = buf.readInt();
         clientProgressMax = buf.readInt();
@@ -149,21 +151,20 @@ public class VoidMinerStatusMenu extends AbstractContainerMenu {
             @Override public void set(int v) { clientCapacity = (clientCapacity & 0xFFFF0000) | (v & 0xFFFF); }
         });
         addDataSlot(new DataSlot() {
-            @Override public int get() { return (fluid() >>> 16) & 0xFFFF; }
-            @Override public void set(int v) { clientFluid = (clientFluid & 0xFFFF) | ((v & 0xFFFF) << 16); }
+            @Override public int get() { return fluidMode() ? 1 : 0; }
+            @Override public void set(int v) { clientFluidMode = v; }
         });
-        addDataSlot(new DataSlot() {
-            @Override public int get() { return fluid() & 0xFFFF; }
-            @Override public void set(int v) { clientFluid = (clientFluid & 0xFFFF0000) | (v & 0xFFFF); }
-        });
-        addDataSlot(new DataSlot() {
-            @Override public int get() { return (fluidCapacity() >>> 16) & 0xFFFF; }
-            @Override public void set(int v) { clientFluidCapacity = (clientFluidCapacity & 0xFFFF) | ((v & 0xFFFF) << 16); }
-        });
-        addDataSlot(new DataSlot() {
-            @Override public int get() { return fluidCapacity() & 0xFFFF; }
-            @Override public void set(int v) { clientFluidCapacity = (clientFluidCapacity & 0xFFFF0000) | (v & 0xFFFF); }
-        });
+        for (int t = 0; t < VoidMinerControllerEntity.TANK_COUNT; t++) {
+            final int tank = t;
+            addDataSlot(new DataSlot() {
+                @Override public int get() { return tankAmount(tank) & 0xFFFF; }
+                @Override public void set(int v) { clientTankAmount[tank] = v & 0xFFFF; }
+            });
+            addDataSlot(new DataSlot() {
+                @Override public int get() { return tankFluidId(tank) & 0xFFFF; }
+                @Override public void set(int v) { clientTankFluidId[tank] = v & 0xFFFF; }
+            });
+        }
         addDataSlot(new DataSlot() {
             @Override public int get() { return miner != null && !clientSide ? (miner.isWorking() ? 1 : 0) : clientStatus; }
             @Override public void set(int v) { clientStatus = v; }
@@ -250,12 +251,16 @@ public class VoidMinerStatusMenu extends AbstractContainerMenu {
         return miner != null && !clientSide ? miner.getAggregateEnergyCapacity() : clientCapacity;
     }
 
-    private int fluid() {
-        return miner != null && !clientSide ? miner.getFluidStored() : clientFluid;
+    private boolean fluidMode() {
+        return miner != null && !clientSide ? miner.isFluidMode() : clientFluidMode != 0;
     }
 
-    private int fluidCapacity() {
-        return miner != null && !clientSide ? miner.getFluidCapacity() : clientFluidCapacity;
+    private int tankAmount(int tank) {
+        return miner != null && !clientSide ? miner.getTankAmount(tank) : clientTankAmount[tank];
+    }
+
+    private int tankFluidId(int tank) {
+        return miner != null && !clientSide ? miner.getTankFluidId(tank) : clientTankFluidId[tank];
     }
 
     public int getEnergy() {
@@ -266,12 +271,24 @@ public class VoidMinerStatusMenu extends AbstractContainerMenu {
         return capacity();
     }
 
-    public int getFluid() {
-        return fluid();
+    public boolean isFluidMode() {
+        return fluidMode();
     }
 
-    public int getFluidCapacity() {
-        return fluidCapacity();
+    public int getTankCount() {
+        return VoidMinerControllerEntity.TANK_COUNT;
+    }
+
+    public int getTankCapacity() {
+        return VoidMinerControllerEntity.TANK_CAPACITY;
+    }
+
+    public int getTankAmount(int tank) {
+        return tankAmount(tank);
+    }
+
+    public Fluid getTankFluid(int tank) {
+        return BuiltInRegistries.FLUID.byId(tankFluidId(tank));
     }
 
     public boolean isWorking() {
@@ -299,6 +316,15 @@ public class VoidMinerStatusMenu extends AbstractContainerMenu {
         if (stack.isEmpty()) slot.set(ItemStack.EMPTY);
         else slot.setChanged();
         return original;
+    }
+
+    @Override
+    public boolean clickMenuButton(Player player, int id) {
+        if (miner != null && !clientSide && id == 0) {
+            miner.toggleFluidMode();
+            return true;
+        }
+        return false;
     }
 
     @Override

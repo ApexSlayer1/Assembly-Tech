@@ -1,6 +1,6 @@
 {
   "type": "assemblytech:void_mining",
-  "designator": "assemblytech:target_designator",
+  "designator": "assemblytech:ore_designator",
   "entries": [
     {
       "tag": "c:ores/coal",

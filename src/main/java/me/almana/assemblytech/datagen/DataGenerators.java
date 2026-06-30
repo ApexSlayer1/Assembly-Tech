@@ -22,12 +22,14 @@ public final class DataGenerators {
     public static void onGatherDataServer(GatherDataEvent.Server event) {
         register(event);
         event.createProvider(VoidMiningRecipeProvider::new);
+        event.createProvider(VoidPumpingRecipeProvider::new);
     }
 
     @SubscribeEvent
     public static void onGatherDataClient(GatherDataEvent.Client event) {
         register(event);
         event.createProvider(VoidMiningRecipeProvider::new);
+        event.createProvider(VoidPumpingRecipeProvider::new);
         event.createProvider(AssemblytechModelProvider::new);
         event.createProvider(AthenaBlockstateProvider::new);
     }

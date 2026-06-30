@@ -22,6 +22,8 @@ public record DesignatorTexturesPayload(Map<Identifier, String> textures) implem
         for (var holder : recipeManager.getRecipes()) {
             if (holder.value() instanceof VoidMiningRecipe recipe) {
                 textures.put(BuiltInRegistries.ITEM.getKey(recipe.designator().value()), recipe.texture());
+            } else if (holder.value() instanceof VoidPumpingRecipe recipe) {
+                textures.put(BuiltInRegistries.ITEM.getKey(recipe.designator().value()), recipe.texture());
             }
         }
         return new DesignatorTexturesPayload(textures);

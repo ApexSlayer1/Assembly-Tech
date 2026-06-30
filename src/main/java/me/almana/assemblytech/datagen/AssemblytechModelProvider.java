@@ -3,7 +3,7 @@ package me.almana.assemblytech.datagen;
 import me.almana.assemblytech.Assemblytech;
 import me.almana.assemblytech.registry.ModBlocks;
 import me.almana.assemblytech.registry.ModItems;
-import me.almana.assemblytech.voidminer.client.TargetDesignatorItemRenderer;
+import me.almana.assemblytech.voidminer.client.OreDesignatorItemRenderer;
 import me.almana.assemblytech.voidminer.LaserBlock;
 import me.almana.assemblytech.voidminer.client.LaserItemRenderer;
 import net.minecraft.client.data.models.BlockModelGenerators;
@@ -59,13 +59,17 @@ public final class AssemblytechModelProvider extends ModelProvider {
 
         itemModels.generateFlatItem(ModItems.ASSEMBLER.get(), ModelTemplates.FLAT_ITEM);
         Identifier designatorBase = Identifier.fromNamespaceAndPath(Assemblytech.MODID, "item/target_designator_base");
-        itemModels.itemModelOutput.accept(ModItems.TARGET_DESIGNATOR.get(), ItemModelUtils.composite(
+        itemModels.itemModelOutput.accept(ModItems.ORE_DESIGNATOR.get(), ItemModelUtils.composite(
                 ItemModelUtils.plainModel(designatorBase),
-                ItemModelUtils.specialModel(designatorBase, new TargetDesignatorItemRenderer.Unbaked())
+                ItemModelUtils.specialModel(designatorBase, new OreDesignatorItemRenderer.Unbaked())
         ));
         itemModels.itemModelOutput.accept(ModItems.RESOURCE_DESIGNATOR.get(), ItemModelUtils.composite(
                 ItemModelUtils.plainModel(designatorBase),
-                ItemModelUtils.specialModel(designatorBase, new TargetDesignatorItemRenderer.Unbaked())
+                ItemModelUtils.specialModel(designatorBase, new OreDesignatorItemRenderer.Unbaked())
+        ));
+        itemModels.itemModelOutput.accept(ModItems.FLUID_DESIGNATOR.get(), ItemModelUtils.composite(
+                ItemModelUtils.plainModel(designatorBase),
+                ItemModelUtils.specialModel(designatorBase, new OreDesignatorItemRenderer.Unbaked())
         ));
         itemModels.itemModelOutput.accept(ModItems.DRILL_BLOCK.get(), ItemModelUtils.specialModel(
                 Identifier.fromNamespaceAndPath(Assemblytech.MODID, "block/drill_block"),

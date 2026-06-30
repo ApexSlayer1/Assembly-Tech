@@ -12,9 +12,12 @@ import me.almana.assemblytech.registry.ModRecipes;
 import me.almana.assemblytech.voidminer.menu.VoidMinerStatusMenu;
 import me.almana.assemblytech.voidminer.recipe.VoidMiningRecipe;
 import me.almana.assemblytech.voidminer.recipe.VoidMiningRoll;
+import me.almana.assemblytech.voidminer.recipe.VoidPumpingRecipe;
+import me.almana.assemblytech.voidminer.recipe.VoidPumpingRoll;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
@@ -34,6 +37,7 @@ import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.transfer.energy.SimpleEnergyHandler;
+import net.neoforged.neoforge.transfer.fluid.FluidResource;
 import net.neoforged.neoforge.transfer.fluid.FluidStacksResourceHandler;
 import net.neoforged.neoforge.transfer.item.ItemResource;
 import net.neoforged.neoforge.transfer.item.ItemStacksResourceHandler;
@@ -48,11 +52,14 @@ import java.util.concurrent.ForkJoinPool;
 public class VoidMinerControllerEntity extends MultiblockControllerEntity implements MenuProvider, Container {
 
     private static final int OUTPUT_SLOTS = 27;
+    public static final int TANK_COUNT = 4;
+    public static final int TANK_CAPACITY = 32_000;
     private static final String TAG_OUTPUT = "Output";
     private static final String TAG_COUNTER = "ProcessCounter";
     private static final String TAG_BLOCKED_NO_SPACE = "BlockedNoSpace";
     private static final String TAG_ENERGY = "Energy";
     private static final String TAG_FLUID = "Fluid";
+    private static final String TAG_FLUID_MODE = "FluidMode";
     private static final String TAG_DESIGNATOR = "Designator";
 
     private final SimpleContainer designatorContainer = new SimpleContainer(1) {
@@ -99,16 +106,28 @@ public class VoidMinerControllerEntity extends MultiblockControllerEntity implem
         }
     };
 
-    private final FluidStacksResourceHandler fluidHandler = new FluidStacksResourceHandler(1, 1_000_000) {
+    private final FluidStacksResourceHandler fluidHandler = new FluidStacksResourceHandler(TANK_COUNT, TANK_CAPACITY) {
         @Override
         protected void onContentsChanged(int index, FluidStack previous) {
             setChanged();
+        }
+
+        @Override
+        public void deserialize(ValueInput input) {
+            super.deserialize(input);
+            if (size() == TANK_COUNT) return;
+            NonNullList<FluidStack> existing = copyToList();
+            NonNullList<FluidStack> resized = NonNullList.withSize(TANK_COUNT, FluidStack.EMPTY);
+            for (int i = 0; i < Math.min(existing.size(), TANK_COUNT); i++)
+                resized.set(i, existing.get(i));
+            setStacks(resized);
         }
     };
 
     private int processCounter;
     private boolean blockedNoSpace;
     private boolean pendingRoll;
+    private boolean fluidMode;
     @Nullable
     private MinerTierConfig cachedTierConfig;
 
@@ -158,8 +177,6 @@ public class VoidMinerControllerEntity extends MultiblockControllerEntity implem
         buf.writeBlockPos(worldPosition);
         buf.writeInt(getAggregateEnergyStored());
         buf.writeInt(getAggregateEnergyCapacity());
-        buf.writeInt(getFluidStored());
-        buf.writeInt(getFluidCapacity());
         buf.writeInt(isWorking() ? 1 : 0);
         buf.writeInt(getProgressCurrent());
         buf.writeInt(getProgressMax());
@@ -179,6 +196,17 @@ public class VoidMinerControllerEntity extends MultiblockControllerEntity implem
         for (var holder : serverLevel.getServer().getRecipeManager()
                 .recipeMap().byType(ModRecipes.VOID_MINING.get())) {
             VoidMiningRecipe recipe = holder.value();
+            if (recipe.designator().value() == designator) return recipe;
+        }
+        return null;
+    }
+
+    @Nullable
+    private VoidPumpingRecipe lookupPumpingRecipe(Item designator) {
+        if (!(level instanceof ServerLevel serverLevel)) return null;
+        for (var holder : serverLevel.getServer().getRecipeManager()
+                .recipeMap().byType(ModRecipes.VOID_PUMPING.get())) {
+            VoidPumpingRecipe recipe = holder.value();
             if (recipe.designator().value() == designator) return recipe;
         }
         return null;
@@ -246,6 +274,11 @@ public class VoidMinerControllerEntity extends MultiblockControllerEntity implem
         if (pendingRoll) return;
         if (isOverUpgradeCap()) return;
 
+        if (fluidMode) {
+            tickFluid(level);
+            return;
+        }
+
         if (!anyOutputHasFreeSlot()) {
             setBlocked(true);
             return;
@@ -297,6 +330,62 @@ public class VoidMinerControllerEntity extends MultiblockControllerEntity implem
         return false;
     }
 
+    private void tickFluid(Level level) {
+        if (!anyTankHasSpace()) {
+            setBlocked(true);
+            return;
+        }
+
+        ItemStack designator = designatorContainer.getItem(0);
+        if (designator.isEmpty()) {
+            setBlocked(false);
+            return;
+        }
+        VoidPumpingRecipe recipe = lookupPumpingRecipe(designator.getItem());
+        if (recipe == null) {
+            setBlocked(false);
+            return;
+        }
+
+        MinerTierConfig cfg = tierConfig();
+        setBlocked(false);
+
+        int cost = effectiveEnergyPerTick(cfg);
+        if (energyStorage.getAmountAsLong() < cost) return;
+        energyStorage.set((int) (energyStorage.getAmountAsLong() - cost));
+
+        processCounter++;
+        if (processCounter < effectiveProcessTicks(cfg)) return;
+        processCounter = 0;
+
+        List<FluidStack> rolled = VoidPumpingRoll.roll(recipe.entries(), getModifierData(), level.getRandom());
+        if (rolled.isEmpty()) return;
+        insertFluids(rolled);
+    }
+
+    private void insertFluids(List<FluidStack> fluids) {
+        boolean changed = false;
+        try (Transaction tx = Transaction.open(null)) {
+            for (FluidStack fs : fluids) {
+                if (fs.isEmpty()) continue;
+                int inserted = fluidHandler.insert(FluidResource.of(fs), fs.getAmount(), tx);
+                if (inserted > 0) changed = true;
+                if (inserted < fs.getAmount()) setBlocked(true);
+            }
+            tx.commit();
+        }
+        if (changed) setChanged();
+    }
+
+    private boolean anyTankHasSpace() {
+        for (int i = 0; i < fluidHandler.size(); i++) {
+            FluidResource res = fluidHandler.getResource(i);
+            if (res.isEmpty()) return true;
+            if (fluidHandler.getAmountAsLong(i) < fluidHandler.getCapacityAsLong(i, res)) return true;
+        }
+        return false;
+    }
+
     private void applyDrops(BlockPos self, List<ItemStack> drops) {
         pendingRoll = false;
         if (isRemoved() || !formed || !worldPosition.equals(self)) return;
@@ -325,10 +414,26 @@ public class VoidMinerControllerEntity extends MultiblockControllerEntity implem
 
     public boolean isWorking() {
         if (!formed || blockedNoSpace || pendingRoll || isOverUpgradeCap()) return false;
-        if (!anyOutputHasFreeSlot()) return false;
         ItemStack designator = designatorContainer.getItem(0);
-        if (designator.isEmpty() || lookupMiningRecipe(designator.getItem()) == null) return false;
+        if (designator.isEmpty()) return false;
+        if (fluidMode) {
+            if (!anyTankHasSpace() || lookupPumpingRecipe(designator.getItem()) == null) return false;
+            return energyStorage.getAmountAsLong() >= effectiveEnergyPerTick(tierConfig());
+        }
+        if (!anyOutputHasFreeSlot()) return false;
+        if (lookupMiningRecipe(designator.getItem()) == null) return false;
         return energyStorage.getAmountAsLong() >= effectiveEnergyPerTick(tierConfig());
+    }
+
+    public boolean isFluidMode() {
+        return fluidMode;
+    }
+
+    public void toggleFluidMode() {
+        fluidMode = !fluidMode;
+        processCounter = 0;
+        blockedNoSpace = false;
+        setChanged();
     }
 
     public int getMaxUpgrades() {
@@ -343,12 +448,20 @@ public class VoidMinerControllerEntity extends MultiblockControllerEntity implem
         return VoidMinerTiers.oreMinerEnergyCapacity(getMultiblockType().tier());
     }
 
-    public int getFluidStored() {
-        return fluidHandler.getAmountAsInt(0);
+    public int getTankCount() {
+        return TANK_COUNT;
     }
 
-    public int getFluidCapacity() {
-        return fluidHandler.getCapacityAsInt(0, fluidHandler.getResource(0));
+    public int getTankCapacity() {
+        return TANK_CAPACITY;
+    }
+
+    public int getTankAmount(int tank) {
+        return fluidHandler.getAmountAsInt(tank);
+    }
+
+    public int getTankFluidId(int tank) {
+        return BuiltInRegistries.FLUID.getId(fluidHandler.getResource(tank).getFluid());
     }
 
     public int getProgressCurrent() {
@@ -435,6 +548,7 @@ public class VoidMinerControllerEntity extends MultiblockControllerEntity implem
         super.saveAdditional(output);
         output.putInt(TAG_COUNTER, processCounter);
         output.putBoolean(TAG_BLOCKED_NO_SPACE, blockedNoSpace);
+        output.putBoolean(TAG_FLUID_MODE, fluidMode);
         output.putInt(TAG_ENERGY, (int) energyStorage.getAmountAsLong());
         outputHandler.serialize(output.child(TAG_OUTPUT));
         fluidHandler.serialize(output.child(TAG_FLUID));
@@ -448,6 +562,7 @@ public class VoidMinerControllerEntity extends MultiblockControllerEntity implem
         super.loadAdditional(input);
         processCounter = input.getIntOr(TAG_COUNTER, 0);
         blockedNoSpace = input.getBooleanOr(TAG_BLOCKED_NO_SPACE, false);
+        fluidMode = input.getBooleanOr(TAG_FLUID_MODE, false);
         energyStorage.set(input.getIntOr(TAG_ENERGY, 0));
         input.child(TAG_OUTPUT).ifPresent(outputHandler::deserialize);
         input.child(TAG_FLUID).ifPresent(fluidHandler::deserialize);

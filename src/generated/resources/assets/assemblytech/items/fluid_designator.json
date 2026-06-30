@@ -10,7 +10,7 @@
         "type": "minecraft:special",
         "base": "assemblytech:item/target_designator_base",
         "model": {
-          "type": "assemblytech:target_designator"
+          "type": "assemblytech:ore_designator"
         }
       }
     ]

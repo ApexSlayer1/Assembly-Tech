@@ -4,10 +4,17 @@ import me.almana.assemblytech.voidminer.menu.VoidMinerStatusMenu;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.material.Fluid;
+import net.minecraft.world.level.material.Fluids;
+import net.neoforged.neoforge.fluids.FluidStack;
 
 import java.util.List;
 import java.util.Locale;
@@ -45,6 +52,16 @@ public class VoidMinerStatusScreen extends AbstractContainerScreen<VoidMinerStat
     private static final int DESIGNATOR_PANEL_H = 76;
     private static final int DESIGNATOR_SLOT_X = 307;
     private static final int DESIGNATOR_SLOT_Y = 68;
+
+    private static final int MODE_BTN_X = 296;
+    private static final int MODE_BTN_Y = 92;
+    private static final int MODE_BTN_W = 39;
+    private static final int MODE_BTN_H = 16;
+
+    private static final int TANK_GAP = 6;
+    private static final int TANK_AREA_DX = 8;
+    private static final int TANK_AREA_DY = 18;
+    private static final int TANK_AREA_H = 52;
 
     private static final int POWER_X = 290;
     private static final int POWER_Y = 136;
@@ -94,11 +111,77 @@ public class VoidMinerStatusScreen extends AbstractContainerScreen<VoidMinerStat
         drawCornerBrackets(graphics, x, y, imageWidth, imageHeight, COLOR_RIM_BRIGHT);
         drawHeader(graphics, x, y);
         drawChamber(graphics, x, y, a);
-        drawOutputPanel(graphics, x, y);
+        if (menu.isFluidMode()) drawFluidTanks(graphics, x, y);
+        else drawOutputPanel(graphics, x, y);
         drawDesignatorPanel(graphics, x, y);
+        drawModeButton(graphics, x, y);
         drawInventoryPanel(graphics, x, y);
         drawPowerCell(graphics, x, y);
         drawRivets(graphics, x, y);
+    }
+
+    private void drawModeButton(GuiGraphicsExtractor graphics, int x, int y) {
+        boolean fluid = menu.isFluidMode();
+        int bx = x + MODE_BTN_X;
+        int by = y + MODE_BTN_Y;
+        fillFrame(graphics, bx, by, MODE_BTN_W, MODE_BTN_H, fluid ? COLOR_ACCENT_DARK : COLOR_PANEL_DARK, COLOR_ACCENT);
+        Component label = Component.translatable(fluid
+                ? "screen.assemblytech.void_miner.mode_fluid"
+                : "screen.assemblytech.void_miner.mode_item");
+        int tw = font.width(label);
+        graphics.text(font, label, bx + (MODE_BTN_W - tw) / 2, by + 4, COLOR_ACCENT, false);
+    }
+
+    private void drawFluidTanks(GuiGraphicsExtractor graphics, int x, int y) {
+        int px = x + OUTPUT_PANEL_X;
+        int py = y + OUTPUT_PANEL_Y;
+        fillFrame(graphics, px, py, MIDDLE_W, 76, COLOR_PANEL, COLOR_RIM);
+        graphics.fill(px + 42, py, px + 146, py + 1, withAlpha(COLOR_ACCENT, 0.55f));
+        graphics.text(font, Component.translatable("screen.assemblytech.void_miner.fluid_tanks"), px + 8, py + 5, COLOR_TEXT, false);
+
+        int count = menu.getTankCount();
+        int areaX = px + TANK_AREA_DX;
+        int areaY = py + TANK_AREA_DY;
+        int tankW = tankWidth(count);
+        for (int t = 0; t < count; t++) {
+            int tx = areaX + t * (tankW + TANK_GAP);
+            drawTank(graphics, tx, areaY, tankW, TANK_AREA_H, t);
+        }
+    }
+
+    private static int tankWidth(int count) {
+        return (MIDDLE_W - TANK_AREA_DX * 2 - TANK_GAP * (count - 1)) / count;
+    }
+
+    private void drawTank(GuiGraphicsExtractor graphics, int tx, int ty, int w, int h, int tank) {
+        fillFrame(graphics, tx, ty, w, h, COLOR_CHAMBER, COLOR_RIM);
+        int innerX = tx + 1;
+        int innerY = ty + 1;
+        int innerW = w - 2;
+        int innerH = h - 2;
+
+        int cap = menu.getTankCapacity();
+        int amount = menu.getTankAmount(tank);
+        Fluid fluid = menu.getTankFluid(tank);
+        float pct = cap > 0 ? Mth.clamp((float) amount / cap, 0f, 1f) : 0f;
+        int fill = Math.round(innerH * pct);
+        if (fill > 0 && fluid != Fluids.EMPTY) {
+            int color = tankColor(fluid);
+            graphics.fill(innerX, innerY + innerH - fill, innerX + innerW, innerY + innerH, color);
+            graphics.fill(innerX, innerY + innerH - fill, innerX + innerW, innerY + innerH - fill + 1, 0xFFFFFFFF);
+        }
+        for (int i = 0; i <= 4; i++) {
+            int sy = innerY + innerH - i * innerH / 4;
+            graphics.fill(tx + 1, sy, tx + 4, sy + 1, COLOR_TEXT_MUTE);
+        }
+    }
+
+    private static int tankColor(Fluid fluid) {
+        if (fluid == Fluids.WATER || fluid == Fluids.FLOWING_WATER) return 0xFF3F76E4;
+        if (fluid == Fluids.LAVA || fluid == Fluids.FLOWING_LAVA) return 0xFFD45A12;
+        // ponytail: stable per-fluid tint from registry name, brightened
+        int h = BuiltInRegistries.FLUID.getKey(fluid).hashCode();
+        return 0xFF000000 | (h & 0x7F7F7F) | 0x404040;
     }
 
     private void drawHeader(GuiGraphicsExtractor graphics, int x, int y) {
@@ -359,6 +442,50 @@ public class VoidMinerStatusScreen extends AbstractContainerScreen<VoidMinerStat
         if (mouseX >= tx && mouseX < tx + POWER_W && mouseY >= ty && mouseY < ty + POWER_H) {
             graphics.setTooltipForNextFrame(font, powerTooltip(), Optional.empty(), ItemStack.EMPTY, mouseX, mouseY);
         }
+
+        if (menu.isFluidMode()) {
+            int count = menu.getTankCount();
+            int areaX = leftPos + OUTPUT_PANEL_X + TANK_AREA_DX;
+            int areaY = topPos + OUTPUT_PANEL_Y + TANK_AREA_DY;
+            int tankW = tankWidth(count);
+            for (int t = 0; t < count; t++) {
+                int rx = areaX + t * (tankW + TANK_GAP);
+                if (mouseX >= rx && mouseX < rx + tankW && mouseY >= areaY && mouseY < areaY + TANK_AREA_H) {
+                    graphics.setTooltipForNextFrame(font, tankTooltip(t), Optional.empty(), ItemStack.EMPTY, mouseX, mouseY);
+                    break;
+                }
+            }
+        }
+    }
+
+    @Override
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        if (event.button() == 0) {
+            int bx = leftPos + MODE_BTN_X;
+            int by = topPos + MODE_BTN_Y;
+            if (event.x() >= bx && event.x() < bx + MODE_BTN_W && event.y() >= by && event.y() < by + MODE_BTN_H) {
+                if (minecraft != null && minecraft.gameMode != null) {
+                    minecraft.gameMode.handleInventoryButtonClick(menu.containerId, 0);
+                    minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0f));
+                }
+                return true;
+            }
+        }
+        return super.mouseClicked(event, doubleClick);
+    }
+
+    private List<Component> tankTooltip(int tank) {
+        Fluid fluid = menu.getTankFluid(tank);
+        int amount = menu.getTankAmount(tank);
+        int cap = menu.getTankCapacity();
+        Component name = fluid == Fluids.EMPTY
+                ? Component.translatable("screen.assemblytech.void_miner.tank_empty")
+                : new FluidStack(fluid, Math.max(1, amount)).getHoverName();
+        return List.of(
+                name.copy().withStyle(ChatFormatting.AQUA),
+                Component.translatable("screen.assemblytech.void_miner.tank_amount",
+                        formatNumber(amount), formatNumber(cap)).withStyle(ChatFormatting.GRAY)
+        );
     }
 
     private List<Component> powerTooltip() {

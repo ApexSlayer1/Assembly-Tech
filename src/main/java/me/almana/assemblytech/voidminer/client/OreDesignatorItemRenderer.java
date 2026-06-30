@@ -23,14 +23,14 @@ import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 
-public final class TargetDesignatorItemRenderer implements SpecialModelRenderer<Identifier> {
-    public static final Identifier ID = Identifier.fromNamespaceAndPath(Assemblytech.MODID, "target_designator");
+public final class OreDesignatorItemRenderer implements SpecialModelRenderer<Identifier> {
+    public static final Identifier ID = Identifier.fromNamespaceAndPath(Assemblytech.MODID, "ore_designator");
     private static final Identifier EARTH_TEXTURE = texture("target_planet1");
     private static final Map<Item, Identifier> TEXTURES = new IdentityHashMap<>();
 
     private final PieceModel target;
 
-    private TargetDesignatorItemRenderer(PieceModel target) {
+    private OreDesignatorItemRenderer(PieceModel target) {
         this.target = target;
     }
 
@@ -92,8 +92,8 @@ public final class TargetDesignatorItemRenderer implements SpecialModelRenderer<
     }
 
     public record Unbaked() implements SpecialModelRenderer.Unbaked<Identifier> {
-        public static final MapCodec<TargetDesignatorItemRenderer.Unbaked> MAP_CODEC =
-                MapCodec.unit(new TargetDesignatorItemRenderer.Unbaked());
+        public static final MapCodec<OreDesignatorItemRenderer.Unbaked> MAP_CODEC =
+                MapCodec.unit(new OreDesignatorItemRenderer.Unbaked());
 
         @Override
         public MapCodec<? extends SpecialModelRenderer.Unbaked<Identifier>> type() {
@@ -102,7 +102,7 @@ public final class TargetDesignatorItemRenderer implements SpecialModelRenderer<
 
         @Override
         public SpecialModelRenderer<Identifier> bake(SpecialModelRenderer.BakingContext context) {
-            return new TargetDesignatorItemRenderer(
+            return new OreDesignatorItemRenderer(
                     new PieceModel(createTargetLayer().bakeRoot())
             );
         }

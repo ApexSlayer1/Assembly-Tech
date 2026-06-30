@@ -22,19 +22,19 @@ import net.minecraft.world.level.Level;
 
 import java.util.List;
 
-public record VoidMiningRecipe(String texture, Holder<Item> designator, List<VoidMiningEntry> entries) implements Recipe<VoidMiningRecipe.Input> {
+public record VoidPumpingRecipe(String texture, Holder<Item> designator, List<VoidPumpEntry> entries) implements Recipe<VoidPumpingRecipe.Input> {
 
-    public static final Identifier ID = Identifier.fromNamespaceAndPath(Assemblytech.MODID, "void_mining");
-    public static final MapCodec<VoidMiningRecipe> CODEC = RecordCodecBuilder.mapCodec(inst -> inst.group(
+    public static final Identifier ID = Identifier.fromNamespaceAndPath(Assemblytech.MODID, "void_pumping");
+    public static final MapCodec<VoidPumpingRecipe> CODEC = RecordCodecBuilder.mapCodec(inst -> inst.group(
             com.mojang.serialization.Codec.STRING.optionalFieldOf("texture", "")
                     .xmap(texture -> texture.isEmpty() ? "earth" : texture, texture -> texture)
-                    .forGetter(VoidMiningRecipe::texture),
-            BuiltInRegistries.ITEM.holderByNameCodec().fieldOf("designator").forGetter(VoidMiningRecipe::designator),
-            VoidMiningEntry.CODEC.listOf().fieldOf("entries").forGetter(VoidMiningRecipe::entries)
-    ).apply(inst, VoidMiningRecipe::new));
-    public static final StreamCodec<RegistryFriendlyByteBuf, VoidMiningRecipe> STREAM_CODEC = StreamCodec.of(
-            VoidMiningRecipe::write,
-            VoidMiningRecipe::read
+                    .forGetter(VoidPumpingRecipe::texture),
+            BuiltInRegistries.ITEM.holderByNameCodec().fieldOf("designator").forGetter(VoidPumpingRecipe::designator),
+            VoidPumpEntry.CODEC.listOf().fieldOf("entries").forGetter(VoidPumpingRecipe::entries)
+    ).apply(inst, VoidPumpingRecipe::new));
+    public static final StreamCodec<RegistryFriendlyByteBuf, VoidPumpingRecipe> STREAM_CODEC = StreamCodec.of(
+            VoidPumpingRecipe::write,
+            VoidPumpingRecipe::read
     );
 
     @Override
@@ -54,17 +54,17 @@ public record VoidMiningRecipe(String texture, Holder<Item> designator, List<Voi
 
     @Override
     public String group() {
-        return "void_mining";
+        return "void_pumping";
     }
 
     @Override
     public RecipeSerializer<? extends Recipe<Input>> getSerializer() {
-        return ModRecipes.VOID_MINING_SERIALIZER.get();
+        return ModRecipes.VOID_PUMPING_SERIALIZER.get();
     }
 
     @Override
     public RecipeType<? extends Recipe<Input>> getType() {
-        return ModRecipes.VOID_MINING.get();
+        return ModRecipes.VOID_PUMPING.get();
     }
 
     @Override
@@ -77,14 +77,14 @@ public record VoidMiningRecipe(String texture, Holder<Item> designator, List<Voi
         return RecipeBookCategories.CRAFTING_MISC;
     }
 
-    private static VoidMiningRecipe read(RegistryFriendlyByteBuf buf) {
+    private static VoidPumpingRecipe read(RegistryFriendlyByteBuf buf) {
         String texture = buf.readUtf();
         Item designator = BuiltInRegistries.ITEM.getValue(buf.readIdentifier());
-        List<VoidMiningEntry> entries = buf.readList(VoidMiningEntry::read);
-        return new VoidMiningRecipe(texture, BuiltInRegistries.ITEM.wrapAsHolder(designator), entries);
+        List<VoidPumpEntry> entries = buf.readList(VoidPumpEntry::read);
+        return new VoidPumpingRecipe(texture, BuiltInRegistries.ITEM.wrapAsHolder(designator), entries);
     }
 
-    private static void write(RegistryFriendlyByteBuf buf, VoidMiningRecipe recipe) {
+    private static void write(RegistryFriendlyByteBuf buf, VoidPumpingRecipe recipe) {
         buf.writeUtf(recipe.texture());
         buf.writeIdentifier(BuiltInRegistries.ITEM.getKey(recipe.designator().value()));
         buf.writeCollection(recipe.entries(), (entryBuf, entry) -> entry.write(entryBuf));

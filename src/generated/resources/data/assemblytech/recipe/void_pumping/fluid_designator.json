@@ -1,0 +1,17 @@
+{
+  "type": "assemblytech:void_pumping",
+  "designator": "assemblytech:fluid_designator",
+  "entries": [
+    {
+      "fluid": "minecraft:water",
+      "weight": 100
+    },
+    {
+      "amount_max": 500,
+      "amount_min": 250,
+      "fluid": "minecraft:lava",
+      "weight": 20
+    }
+  ],
+  "texture": "earth"
+}

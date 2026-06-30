@@ -67,10 +67,12 @@ public final class ModItems {
             Assemblytech.ITEMS.registerItem("assembler",
                     props -> new me.almana.assemblytech.multiblock.tool.AssemblerItem(props));
 
-    public static final DeferredItem<Item> TARGET_DESIGNATOR =
-            Assemblytech.ITEMS.registerSimpleItem("target_designator");
+    public static final DeferredItem<Item> ORE_DESIGNATOR =
+            Assemblytech.ITEMS.registerSimpleItem("ore_designator");
     public static final DeferredItem<Item> RESOURCE_DESIGNATOR =
             Assemblytech.ITEMS.registerSimpleItem("resource_designator");
+    public static final DeferredItem<Item> FLUID_DESIGNATOR =
+            Assemblytech.ITEMS.registerSimpleItem("fluid_designator");
 
     public static final DeferredItem<Item> ARCANITE_CRYSTAL =
             Assemblytech.ITEMS.registerSimpleItem("arcanite_crystal");
