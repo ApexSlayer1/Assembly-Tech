@@ -3,7 +3,9 @@ package me.almana.assemblytech;
 import com.mojang.logging.LogUtils;
 import me.almana.assemblytech.command.PlaceStructureCommand;
 import me.almana.assemblytech.generation.MinerTierConfigRegistries;
+import me.almana.assemblytech.client.AssemblerClientInput;
 import me.almana.assemblytech.multiblock.validation.IntegrityMonitor;
+import me.almana.assemblytech.network.CycleAssemblerModePayload;
 import me.almana.assemblytech.registry.ModBlockEntities;
 import me.almana.assemblytech.registry.ModBlocks;
 import me.almana.assemblytech.registry.ModItems;
@@ -167,10 +169,15 @@ public class Assemblytech {
     }
 
     private void registerPayloads(RegisterPayloadHandlersEvent event) {
-        event.registrar("1").playToClient(
-                DesignatorTexturesPayload.TYPE,
-                DesignatorTexturesPayload.STREAM_CODEC,
-                (payload, context) -> OreDesignatorItemRenderer.applyTextures(payload.textures()));
+        event.registrar("1")
+                .playToClient(
+                        DesignatorTexturesPayload.TYPE,
+                        DesignatorTexturesPayload.STREAM_CODEC,
+                        (payload, context) -> OreDesignatorItemRenderer.applyTextures(payload.textures()))
+                .playToServer(
+                        CycleAssemblerModePayload.TYPE,
+                        CycleAssemblerModePayload.STREAM_CODEC,
+                        CycleAssemblerModePayload::handle);
     }
 
     @SubscribeEvent
@@ -188,6 +195,7 @@ public class Assemblytech {
     public static class ClientModEvents {
         @SubscribeEvent
         public static void onClientSetup(FMLClientSetupEvent event) {
+            event.enqueueWork(() -> NeoForge.EVENT_BUS.addListener(AssemblerClientInput::onScroll));
         }
 
         @SubscribeEvent

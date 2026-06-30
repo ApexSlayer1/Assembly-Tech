@@ -53,7 +53,6 @@ public final class VoidPumpingRecipeProvider extends RecipeProvider.Runner {
         output.accept(key, new VoidPumpingRecipe(texture, designator, entries), null);
     }
 
-    // fluid designator: water bulk, lava rare; amounts in mB
     private static List<VoidPumpEntry> fluidEntries() {
         List<VoidPumpEntry> entries = new ArrayList<>();
         addFluid(entries, Fluids.WATER, 100, 1000, 1000);
