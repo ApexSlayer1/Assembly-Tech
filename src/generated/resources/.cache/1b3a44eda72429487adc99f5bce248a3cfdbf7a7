@@ -1,4 +1,4 @@
-// 26.1.2	2026-06-29T10:59:45.1102694	Model Definitions - assemblytech
+// 26.1.2	2026-06-30T09:54:58.430639	Model Definitions - assemblytech
 be687ce24cd7a6f8537d8c67ce318eaeb62049c3 assets/assemblytech/blockstates/drill_block.json
 eee0a2cfeb6eb01c2f8c275b339339e140bc2895 assets/assemblytech/blockstates/drill_core.json
 b37c448f4bb9662a0545ca25ba278d7093d4db1f assets/assemblytech/blockstates/geothermal_vent.json
@@ -49,7 +49,7 @@ acf014166727cc944ab2cf4265f9f10a23e33bfd assets/assemblytech/items/geothermal_ve
 36c031184a8064895fc2f69e845e5206242f92d8 assets/assemblytech/items/prismara_crystal.json
 34251817350d62987117d20c61e84f9eefeb93b4 assets/assemblytech/items/pristine_geothermal_vent.json
 a21739d47e43c0547d1f03e39e02ba7c20f2e251 assets/assemblytech/items/pristine_geothermal_vent_wall.json
-8c29417f484a8429c4a5ee25937166baf027efd9 assets/assemblytech/items/resource_designator.json
+421b690c30dd8574dc34c0946bbb58ec5fe07aef assets/assemblytech/items/resource_designator.json
 cb86efd8710b3486acab7861cf216d190a1fc164 assets/assemblytech/items/rough_geothermal_vent.json
 f61ccaed17355ba5b28903c0243f2b339b56df41 assets/assemblytech/items/rough_geothermal_vent_wall.json
 f06b4418dde662c1b5f9adc21e1f1c2b79edf9f8 assets/assemblytech/items/solunite_crystal.json
@@ -67,7 +67,7 @@ e5617024f64196ee3ce241c5cfadb0bcba19fdff assets/assemblytech/items/structure_fra
 b499512130e09b74768743e6ada876dec4de293c assets/assemblytech/items/structure_panel_5.json
 88223ab84b605b45b6c43774f0f277c6cffed944 assets/assemblytech/items/structure_panel_6.json
 6e58bb92aff0620496350239b6acc60293d89f3d assets/assemblytech/items/structure_panel_7.json
-8c29417f484a8429c4a5ee25937166baf027efd9 assets/assemblytech/items/target_designator.json
+421b690c30dd8574dc34c0946bbb58ec5fe07aef assets/assemblytech/items/target_designator.json
 f31896ab994cf817639a8fcdc9b319ea207a2985 assets/assemblytech/items/upgrade_efficiency.json
 c0e24519faf0ecf9753be0b3db7f4bd876b1ba5f assets/assemblytech/items/upgrade_fortune_1.json
 321ce337f3c1103aee9ae010db69b76f16818d06 assets/assemblytech/items/upgrade_fortune_2.json

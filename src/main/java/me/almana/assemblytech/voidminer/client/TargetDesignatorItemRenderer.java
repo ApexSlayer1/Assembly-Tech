@@ -25,15 +25,12 @@ import java.util.function.Consumer;
 
 public final class TargetDesignatorItemRenderer implements SpecialModelRenderer<Identifier> {
     public static final Identifier ID = Identifier.fromNamespaceAndPath(Assemblytech.MODID, "target_designator");
-    private static final Identifier BASE_TEXTURE = texture("target");
     private static final Identifier EARTH_TEXTURE = texture("target_planet1");
     private static final Map<Item, Identifier> TEXTURES = new IdentityHashMap<>();
 
-    private final PieceModel base;
     private final PieceModel target;
 
-    private TargetDesignatorItemRenderer(PieceModel base, PieceModel target) {
-        this.base = base;
+    private TargetDesignatorItemRenderer(PieceModel target) {
         this.target = target;
     }
 
@@ -61,7 +58,6 @@ public final class TargetDesignatorItemRenderer implements SpecialModelRenderer<
         poseStack.pushPose();
         poseStack.translate(0.5F, 1.5F, 0.5F);
         poseStack.scale(1.0F, -1.0F, -1.0F);
-        submitNodeCollector.submitModel(base, null, poseStack, BASE_TEXTURE, lightCoords, overlayCoords, 0, null);
         submitNodeCollector.submitModel(target, null, poseStack, texture, lightCoords, overlayCoords, 0, null);
         poseStack.popPose();
     }
@@ -71,7 +67,6 @@ public final class TargetDesignatorItemRenderer implements SpecialModelRenderer<
         PoseStack poseStack = new PoseStack();
         poseStack.translate(0.5F, 1.5F, 0.5F);
         poseStack.scale(1.0F, -1.0F, -1.0F);
-        base.root().getExtentsForGui(poseStack, output);
         target.root().getExtentsForGui(poseStack, output);
     }
 
@@ -81,24 +76,11 @@ public final class TargetDesignatorItemRenderer implements SpecialModelRenderer<
         return id == null ? EARTH_TEXTURE : id;
     }
 
-    private static LayerDefinition createBaseLayer() {
-        MeshDefinition mesh = new MeshDefinition();
-        var root = mesh.getRoot();
-        root.addOrReplaceChild("base", CubeListBuilder.create()
-                .texOffs(6, 0).addBox(-8.0F, -2.0F, -6.0F, 2.0F, 2.0F, 12.0F, new CubeDeformation(0.0F))
-                .texOffs(8, 2).addBox(6.0F, -2.0F, -6.0F, 2.0F, 2.0F, 12.0F, new CubeDeformation(0.0F))
-                .texOffs(9, 4).addBox(-6.0F, -2.0F, -8.0F, 12.0F, 2.0F, 2.0F, new CubeDeformation(0.0F))
-                .texOffs(10, 6).addBox(-6.0F, -2.0F, 6.0F, 12.0F, 2.0F, 2.0F, new CubeDeformation(0.0F))
-                .texOffs(0, 6).addBox(-6.0F, -1.0F, -6.0F, 12.0F, 0.0F, 12.0F, new CubeDeformation(0.0F)),
-                PartPose.offset(0.0F, 24.0F, 0.0F));
-        return LayerDefinition.create(mesh, 32, 32);
-    }
-
     private static LayerDefinition createTargetLayer() {
         MeshDefinition mesh = new MeshDefinition();
         var root = mesh.getRoot();
         root.addOrReplaceChild("target", CubeListBuilder.create()
-                .texOffs(0, 0).addBox(-6.0F, -18.0F, 0.0F, 12.0F, 12.0F, 0.0F, new CubeDeformation(0.0F)),
+                .texOffs(0, 0).addBox(-6.0F, -18.0F, 0.0F, 12.0F, 12.0F, 0.01F, new CubeDeformation(0.0F)),
                 PartPose.offset(0.0F, 24.0F, 0.0F));
         return LayerDefinition.create(mesh, 32, 32);
     }
@@ -121,7 +103,6 @@ public final class TargetDesignatorItemRenderer implements SpecialModelRenderer<
         @Override
         public SpecialModelRenderer<Identifier> bake(SpecialModelRenderer.BakingContext context) {
             return new TargetDesignatorItemRenderer(
-                    new PieceModel(createBaseLayer().bakeRoot()),
                     new PieceModel(createTargetLayer().bakeRoot())
             );
         }

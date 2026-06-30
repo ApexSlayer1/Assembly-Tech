@@ -58,13 +58,14 @@ public final class AssemblytechModelProvider extends ModelProvider {
         blockModels.createTrivialCube(ModBlocks.PRISTINE_GEOTHERMAL_VENT_WALL.get());
 
         itemModels.generateFlatItem(ModItems.ASSEMBLER.get(), ModelTemplates.FLAT_ITEM);
-        itemModels.itemModelOutput.accept(ModItems.TARGET_DESIGNATOR.get(), ItemModelUtils.specialModel(
-                Identifier.fromNamespaceAndPath(Assemblytech.MODID, "item/target_designator_base"),
-                new TargetDesignatorItemRenderer.Unbaked()
+        Identifier designatorBase = Identifier.fromNamespaceAndPath(Assemblytech.MODID, "item/target_designator_base");
+        itemModels.itemModelOutput.accept(ModItems.TARGET_DESIGNATOR.get(), ItemModelUtils.composite(
+                ItemModelUtils.plainModel(designatorBase),
+                ItemModelUtils.specialModel(designatorBase, new TargetDesignatorItemRenderer.Unbaked())
         ));
-        itemModels.itemModelOutput.accept(ModItems.RESOURCE_DESIGNATOR.get(), ItemModelUtils.specialModel(
-                Identifier.fromNamespaceAndPath(Assemblytech.MODID, "item/target_designator_base"),
-                new TargetDesignatorItemRenderer.Unbaked()
+        itemModels.itemModelOutput.accept(ModItems.RESOURCE_DESIGNATOR.get(), ItemModelUtils.composite(
+                ItemModelUtils.plainModel(designatorBase),
+                ItemModelUtils.specialModel(designatorBase, new TargetDesignatorItemRenderer.Unbaked())
         ));
         itemModels.itemModelOutput.accept(ModItems.DRILL_BLOCK.get(), ItemModelUtils.specialModel(
                 Identifier.fromNamespaceAndPath(Assemblytech.MODID, "block/drill_block"),
